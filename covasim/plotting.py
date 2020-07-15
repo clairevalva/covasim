@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 from . import defaults as cvd
 from . import misc as cvm
 
+figscale = 0.5
 
 __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people', 'plotly_sim', 'plotly_people', 'plotly_animate']
 
@@ -24,7 +25,7 @@ __all__ = ['plot_sim', 'plot_scens', 'plot_result', 'plot_compare', 'plot_people
 def handle_args(fig_args=None, plot_args=None, scatter_args=None, axis_args=None, fill_args=None, legend_args=None, show_args=None):
     ''' Handle input arguments -- merge user input with defaults; see sim.plot for documentation '''
     args = sc.objdict()
-    args.fig     = sc.mergedicts({'figsize': (16, 14)}, fig_args)
+    args.fig     = sc.mergedicts({'figsize': (16 * figscale, 14 * figscale)}, fig_args)
     args.plot    = sc.mergedicts({'lw': 3, 'alpha': 0.7}, plot_args)
     args.scatter = sc.mergedicts({'s':70, 'marker':'s', 'alpha':0.7, 'zorder':0}, scatter_args)
     args.axis    = sc.mergedicts({'left': 0.10, 'bottom': 0.05, 'right': 0.95, 'top': 0.97, 'wspace': 0.25, 'hspace': 0.25}, axis_args)
@@ -316,7 +317,7 @@ def plot_result(sim, key, fig_args=None, plot_args=None, axis_args=None, scatter
 
     # Handle inputs
     sep_figs = False # Only one figure
-    fig_args  = sc.mergedicts({'figsize':(16,8)}, fig_args)
+    fig_args  = sc.mergedicts({'figsize':(16*figscale,8*figscale)}, fig_args)
     axis_args = sc.mergedicts({'top': 0.95}, axis_args)
     args = handle_args(fig_args, plot_args, scatter_args, axis_args)
     fig, figs, ax = create_figs(args, font_size, font_family, sep_figs, fig)
@@ -410,7 +411,7 @@ def plot_people(people, bins=None, width=1.0, font_size=18, alpha=0.6, fig_args=
     zorder    = 10 # So plots appear on top of gridlines
 
     # Handle other arguments
-    fig_args  = sc.mergedicts(dict(figsize=(30,22)), fig_args)
+    fig_args  = sc.mergedicts(dict(figsize=(30*figscale,22*figscale)), fig_args)
     axis_args = sc.mergedicts(dict(left=0.05, right=0.95, bottom=0.05, top=0.95, wspace=0.3, hspace=0.3), axis_args)
     plot_args = sc.mergedicts(dict(lw=3, alpha=0.6, markersize=10, c=color, zorder=10), plot_args)
     pl.rcParams['font.size'] = font_size
