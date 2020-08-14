@@ -28,12 +28,15 @@ class Person(cv.Person):
         self.infectious  = False
         self.diagnosed   = False
         self.recovered   = False
+        
 
-        # Keep track of dates
+        # Keep track of dates and who
         self.date_exposed    = None
         self.date_infectious = None
         self.date_diagnosed  = None
         self.date_recovered  = None
+        self.exposed_type = None
+        
         return
     
 class Sim(cv.BaseSim):
@@ -104,6 +107,7 @@ class Sim(cv.BaseSim):
             person.infectious = True
             person.date_exposed = 0
             person.date_infectious = 0
+            person.exposed_type = "seeded"
 
         return
     
@@ -178,20 +182,32 @@ class Sim(cv.BaseSim):
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
                         
-                        n_contacts = pt(person.contacts) # Draw the number of Poisson contacts for this person
+                        cnum = person.contacts['c']
+                        topull = np.random.poisson(cnum)
+                        
+                        s1_cons = person.contacts['s1']
+                        s2_cons = person.contacts['s2']
+                        s3_cons = person.contacts['s3']
+                        
+                        # Draw the number of Poisson contacts for this person
                         # this should instead initiate the random contacts? 
-                        c_contacts = cv.choose(max_n=len(self.people), n=n_contacts) # Choose people at random
+                        c_contacts = cv.choose(max_n=len(self.people), n=topull) # Choose people at random
                         
-                        contact_inds = c_contacts
+                        contypes = np.concatenate((["s1" for _ in range(len(s2_cons))], ["s2" for _ in range(len(s1_cons))], ["s3" for _ in range(len(s3_cons))], ["c" for _ in range(topull)]))
                         
+                        contact_inds = np.concatenate((s1_cons, s2_cons, s3_cons, c_contacts))
+                        z = -1
                         for contact_ind in contact_inds and quar == False:
                             exposure = bt(self['r_contact']) # Check for exposure per person
+                            z += 1
                             if exposure:
                                 target_person = self.people[contact_ind]
                                 if target_person.susceptible: # Skip people who are not susceptible
                                     self.results['infections'][t] += 1
                                     target_person.susceptible = False
                                     target_person.exposed = True
+                                    target_person.exposed_type = contypes[z]
+                                    
                                     target_person.date_exposed = t
                                     incub_pars = dict(dist='normal_int', par1=self['incub'], par2=self['incub_std'])
                                     dur_pars   = dict(dist='normal_int', par1=self['dur'],   par2=self['dur_std'])
