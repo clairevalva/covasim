@@ -14,7 +14,7 @@ class Person(cv.Person):
     Class for a single person — pulled directly from the cruiseship model
     '''
     def __init__(self, age=0, sex=0, crew=False, contacts=0, uid = 0):
-        self.uid      = str(pl.randint(0,1e9)) # Unique identifier for this person
+        self.uid      = str(uid) # Unique identifier for this person
         # self.uid      = str(uid)
         # self.age      = float(age) # Age of the person (in years)
         # self.sex      = sex # Female (0) or male (1)
@@ -83,9 +83,18 @@ class Sim(cv.BaseSim):
         self.people = sc.odict() # Dictionary for storing the people
         self.off_ship = sc.odict() # For people who've been moved off the ship
         guests = [0]*self['n_ppl']
+        class_size = 20
+        conned = sc.mergedicts({'s1':class_size, 's2':class_size, 's3':class_size, 'c':class_size}, contacts)
+        
+        # generate contacts
+        contacts_all = make_hybrid_contacts(self['n_ppl'], conned)
+        nu = -1
         for is_crew in guests: # Loop over each person
-            person = Person(contacts=0) # Create the person
+            nu += 1
+            person = Person(contacts=contacts_all[0][nu], uid = nu) # Create the person, gives the correct contacts
             self.people[person.uid] = person # Save them to the dictionary
+            
+            
 
         # Create the seed infections
         for i in range(seed_infections):
@@ -171,7 +180,9 @@ class Sim(cv.BaseSim):
                         
                         n_contacts = pt(person.contacts) # Draw the number of Poisson contacts for this person
                         # this should instead initiate the random contacts? 
-                        contact_inds = cv.choose(max_n=len(self.people), n=n_contacts) # Choose people at random
+                        c_contacts = cv.choose(max_n=len(self.people), n=n_contacts) # Choose people at random
+                        
+                        contact_inds = c_contacts
                         
                         for contact_ind in contact_inds and quar == False:
                             exposure = bt(self['r_contact']) # Check for exposure per person
