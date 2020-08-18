@@ -6,12 +6,13 @@ Defines functions for making the population — pulled from population.py
 import numpy as np  # Needed for a few things not provided by pl
 import sciris as sc
 from collections import defaultdict
-from . import requirements as cvreq
-from . import utils as cvu
-from . import misc as cvm
-from . import defaults as cvd
-from . import parameters as cvpars
-from . import people as cvppl
+import covasim as cova
+import covasim.requirements as cvreq
+import covasim.utils as cvu
+import covasim.misc as cvm
+import covasim.defaults as cvd
+import covasim.parameters as cvpars
+import covasim.people as cvppl
 
 
 # Specify all externally visible functions this file defines
@@ -98,6 +99,19 @@ def make_people(sim, save_pop=False, popfile=None, die=True, reset=False, verbos
 
     return people
 
+def choose_r(max_n, n):
+    '''
+    Choose a subset of items (e.g., people), with replacement.
+
+    Args:
+        max_n (int): the total number of items
+        n (int): the number of items to choose
+
+    **Example**::
+
+        choices = cv.choose_r(5, 10) # choose 10 out of 5 people with equal probability (with repeats)
+    '''
+    return np.random.choice(max_n, n, replace=True)
 
 def make_randpop(sim,  microstructure="uni"):
     '''
@@ -169,7 +183,7 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2, dispersion=None):
     # Precalculate contacts
     n_across_layers = np.sum(list(contacts.values()))
     n_all_contacts  = int(pop_size*n_across_layers*overshoot) # The overshoot is used so we won't run out of contacts if the Poisson draws happen to be higher than the expected value
-    all_contacts    = cvu.choose_r(max_n=pop_size, n=n_all_contacts) # Choose people at random
+    all_contacts    = choose_r(max_n=pop_size, n=n_all_contacts) # Choose people at random
     p_counts = {}
     for lkey in layer_keys:
         if dispersion is None:
@@ -213,7 +227,7 @@ def make_microstructured_contacts(pop_size, contacts):
         cluster_id = -1
         while n_remaining > 0:
             cluster_id += 1 # Assign cluster id
-            this_cluster =  cvu.poisson(cluster_size)  # Sample the cluster size
+            this_cluster =  np.random.poisson(cluster_size)  # Sample the cluster size
             if this_cluster > n_remaining:
                 this_cluster = n_remaining
 
@@ -228,7 +242,7 @@ def make_microstructured_contacts(pop_size, contacts):
             n_remaining -= this_cluster
 
         for key in contacts_dict.keys():
-            contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=cvd.default_int)
+            contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=int)
 
         clusters = {layer_name: cluster_dict}
 
@@ -237,7 +251,7 @@ def make_microstructured_contacts(pop_size, contacts):
 
 
 
-def make_hybrid_contacts(pop_size, ages, contacts):
+def make_hybrid_contacts(pop_size, contacts):
     '''
     Create "hybrid" contacts -- microstructured contacts for households and
     random contacts for schools and workplaces, both of which have extremely
@@ -265,8 +279,7 @@ def make_hybrid_contacts(pop_size, ages, contacts):
     # Make community contacts
     c_contacts, _ = make_random_contacts(pop_size, {'c':contacts['c']})
 
-    # Get the indices of people in each age bin
-    ages = np.array(ages)
+   
    
     # Construct the actual lists of contacts
     for i in range(pop_size):

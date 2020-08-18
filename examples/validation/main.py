@@ -23,6 +23,8 @@ def test_sim(doplot=False): # If being run via pytest, turn off
     sim = Sim()
     sim.set_seed(seed)
     sim.run(verbose=verbose)
+    
+    sim.save()
 
     # Optionally plot
     if doplot:

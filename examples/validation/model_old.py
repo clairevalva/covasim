@@ -17,7 +17,7 @@ class Person(cv.Person):
         # self.sex      = sex # Female (0) or male (1)
         # self.crew     = crew # Wehther the person is a crew member
         self.contacts = contacts # Determine how many contacts they have
-
+        self.quarantine = None
         # Define state
         self.alive       = True
         self.susceptible = True

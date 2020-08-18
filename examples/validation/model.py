@@ -8,6 +8,8 @@ import pylab as pl
 import sciris as sc
 import covasim as cv
 import parameters_02 as cova_pars
+import make_network
+import random
 
 class Person(cv.Person):
     '''
@@ -86,11 +88,11 @@ class Sim(cv.BaseSim):
         self.people = sc.odict() # Dictionary for storing the people
         self.off_ship = sc.odict() # For people who've been moved off the ship
         guests = [0]*self['n_ppl']
-        class_size = 20
-        conned = sc.mergedicts({'s1':class_size, 's2':class_size, 's3':class_size, 'c':class_size}, contacts)
+        class_size = 15
+        conned = {'s1':class_size, 's2':class_size, 's3':class_size, 'c':class_size}
         
         # generate contacts
-        contacts_all = make_hybrid_contacts(self['n_ppl'], conned)
+        contacts_all = make_network.make_hybrid_contacts(self['n_ppl'], conned)
         nu = -1
         for is_crew in guests: # Loop over each person
             nu += 1
@@ -111,7 +113,7 @@ class Sim(cv.BaseSim):
 
         return
     
-     def summary_stats(self):
+    def summary_stats(self):
         ''' Compute the summary statistics to display at the end of a run '''
         keys = ['n_susceptible', 'n_exposed', 'n_infectious']
         summary = {}
@@ -182,45 +184,68 @@ class Sim(cv.BaseSim):
                     else:
                         self.results['n_infectious'][t] += 1 # Count this person as infectious
                         
-                        cnum = person.contacts['c']
+                        cnum = 11
                         topull = np.random.poisson(cnum)
                         
                         s1_cons = person.contacts['s1']
                         s2_cons = person.contacts['s2']
                         s3_cons = person.contacts['s3']
                         
-                        # Draw the number of Poisson contacts for this person
+                        
+                        # Draw the numbergit  of Poisson contacts for this person
                         # this should instead initiate the random contacts? 
-                        c_contacts = cv.choose(max_n=len(self.people), n=topull) # Choose people at random
+                        rng = np.random.default_rng()
+                        
+                        
+                        shuffled = np.array(range(len(self.people)))
+                        rng.shuffle(shuffled)
+
+                        
+                        c_contacts = np.array(shuffled)[:topull] # Choose people at random
                         
                         contypes = np.concatenate((["s1" for _ in range(len(s2_cons))], ["s2" for _ in range(len(s1_cons))], ["s3" for _ in range(len(s3_cons))], ["c" for _ in range(topull)]))
                         
-                        contact_inds = np.concatenate((s1_cons, s2_cons, s3_cons, c_contacts))
+                        #contact_inds = np.concatenate((s1_cons, s2_cons, s3_cons, c_contacts))
+                        # uncomment above to add back community contacts
+                        contact_inds = np.concatenate((s1_cons, s2_cons, s3_cons))
+                        
                         z = -1
-                        for contact_ind in contact_inds and quar == False:
-                            exposure = bt(self['r_contact']) # Check for exposure per person
-                            z += 1
-                            if exposure:
-                                target_person = self.people[contact_ind]
-                                if target_person.susceptible: # Skip people who are not susceptible
-                                    self.results['infections'][t] += 1
-                                    target_person.susceptible = False
-                                    target_person.exposed = True
-                                    target_person.exposed_type = contypes[z]
+                        for contact_ind in contact_inds:
+                            if person.quarantine == False:
+                                exposure = bt(self['r_contact']) # Check for exposure per person
+                                z += 1
+                                if exposure:
+                                    target_person = self.people[contact_ind]
+                                    if target_person.susceptible: # Skip people who are not susceptible
+                                        self.results['infections'][t] += 1
+                                        target_person.susceptible = False
+                                        target_person.exposed = True
+                                        target_person.exposed_type = contypes[z]
                                     
-                                    target_person.date_exposed = t
-                                    incub_pars = dict(dist='normal_int', par1=self['incub'], par2=self['incub_std'])
-                                    dur_pars   = dict(dist='normal_int', par1=self['dur'],   par2=self['dur_std'])
-                                    incub_dist = cv.sample(**incub_pars)
-                                    dur_dist   = cv.sample(**dur_pars)
+                                        target_person.date_exposed = t
+                                        incub_pars = dict(dist='normal_int', par1=self['incub'], par2=self['incub_std'])
+                                        dur_pars   = dict(dist='normal_int', par1=self['dur'],   par2=self['dur_std'])
+                                        incub_dist = cv.sample(**incub_pars)
+                                        dur_dist   = cv.sample(**dur_pars)
 
-                                    target_person.date_infectious = t + incub_dist
-                                    target_person.date_recovered = target_person.date_infectious + dur_dist
-                                    if verbose>=2:
-                                        print(f'        Person {person.uid} infected person {target_person.uid}!')
+                                        target_person.date_infectious = t + incub_dist
+                                        target_person.date_recovered = target_person.date_infectious + dur_dist
+                                        if verbose>=2:
+                                            print(f'        Person {person.uid} infected person {target_person.uid}!')
 
                 # Count people who recovered
                 if person.recovered:
                     self.results['n_recovered'][t] += 1
 
-    
+
+#%% Define helper functions, with Numba for performance
+
+@nb.njit((nb.float64,))
+def pt(rate):
+    ''' A Poisson trial '''
+    return np.random.poisson(rate, 1)[0]
+
+@nb.njit((nb.float64,))
+def bt(prob):
+    ''' Perform a binomial (Bernolli) trial '''
+    return np.random.random() < prob
