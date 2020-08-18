@@ -24,7 +24,7 @@ def test_sim(doplot=False): # If being run via pytest, turn off
     sim.set_seed(seed)
     sim.run(verbose=verbose)
     
-    sim.save()
+    np.save("text_save.npy", sim.people.values())
 
     # Optionally plot
     if doplot:
