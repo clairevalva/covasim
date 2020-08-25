@@ -35,4 +35,4 @@ def test_sim(doplot=False, savename = "people_save.npy"): # If being run via pyt
 
 
 for xx in range(100):
-    test_sim(savename = "run_" + str(xx) +".npy")
+    test_sim(savename = "run_folder/run_" + str(xx) +".npy")
