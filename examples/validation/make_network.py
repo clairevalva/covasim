@@ -13,6 +13,7 @@ import covasim.misc as cvm
 import covasim.defaults as cvd
 import covasim.parameters as cvpars
 import covasim.people as cvppl
+import random
 
 
 # Specify all externally visible functions this file defines
@@ -204,7 +205,9 @@ def make_random_contacts(pop_size, contacts, overshoot=1.2, dispersion=None):
 
     return contacts_list, layer_keys
                               
-                              
+def my_shuffle(array):
+    random.shuffle(array)
+    return array                              
                               
 def make_microstructured_contacts(pop_size, contacts):
     ''' Create microstructured contacts -- i.e. for households '''
@@ -215,6 +218,10 @@ def make_microstructured_contacts(pop_size, contacts):
     contacts.pop('c', None) # Remove community
     layer_keys = list(contacts.keys())
     contacts_list = [{c:[] for c in layer_keys} for p in range(pop_size)] # Pre-populate
+    
+    shuffled = np.array([my_shuffle(np.array(range(pop_size))) for _ in range(3)]) # will have to change if add more layers
+    
+    layer_ind = 0
 
     for layer_name, cluster_size in contacts.items():
 
@@ -233,13 +240,15 @@ def make_microstructured_contacts(pop_size, contacts):
 
             # Indices of people in this cluster
             cluster_indices = (pop_size-n_remaining)+np.arange(this_cluster)
-            cluster_dict[cluster_id] = cluster_indices
-            for i in cluster_indices: # Add symmetric pairwise contacts in each cluster
-                for j in cluster_indices:
+            actual_add = shuffled[layer_ind][cluster_indices]
+            cluster_dict[cluster_id] = actual_add#cluster_indices
+            for i in actual_add: #cluster_indices: # Add symmetric pairwise contacts in each cluster
+                for j in actual_add: #cluster_indices:
                     if j > i:
                         contacts_dict[i].add(j)
 
             n_remaining -= this_cluster
+        layer_ind += 1
 
         for key in contacts_dict.keys():
             contacts_list[key][layer_name] = np.array(list(contacts_dict[key]), dtype=int)

@@ -23,7 +23,7 @@ def make_pars():
     pars['verbose']    = 1 # Whether or not to display information during the run -- options are 0 (silent), 1 (default), 2 (everything)
 
     # Epidemic parameters
-    pars['r_contact']      = .3 # Probability of infection per contact, estimated - beta??
+    pars['r_contact']      = 0.3 # Probability of infection per contact, estimated - beta??
     pars['incub']          = 14 # Using Mike's Snohomish number 
     pars['incub_std']      = 0 # Standard deviation of the serial interval, estimated
     pars['dur']            = 10 # Using Mike's Snohomish number

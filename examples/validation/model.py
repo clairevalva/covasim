@@ -168,13 +168,19 @@ class Sim(cv.BaseSim):
                         if verbose>=2:
                             print(f'      Person {person.uid} became infectious!')
                     if t == person.date_infectious:
-                        # give 50% chance of quaratine?
-                        q_per = .5
-                        quar = np.random.choice([True, False], p = [q_per, 1 - q_per])
-                        person.quarantine = np.copy(quar)
+                        # print(type(person.uid))
+                        if int(person.uid) != 0:
+                            # give 50% chance of quaratine?
+                            q_per = .5
+                            quar = np.random.choice([True, False], p = [q_per, 1 - q_per])
+                            #person.quarantine = np.copy(quar)
+                            person.quarantine = False
+                        else: 
+                            person.quarantine = False 
 
                 # If infectious, check if anyone gets infected
                 if person.infectious:
+                    # print(person)
                     # First, check for recovery
                     if person.date_recovered and t >= person.date_recovered: # It's the day they become infectious
                         person.exposed = False
