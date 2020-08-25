@@ -13,7 +13,7 @@ import sciris as sc
 doplot = 1
 
 # this would be how to run the model! - but how does it assign contacts?    
-def test_sim(doplot=False): # If being run via pytest, turn off
+def test_sim(doplot=False, savename = "people_save.npy"): # If being run via pytest, turn off
 
     # Settings
     seed = 1
@@ -24,8 +24,8 @@ def test_sim(doplot=False): # If being run via pytest, turn off
     sim.set_seed(seed)
     sim.run(verbose=verbose)
     
-    np.save("people_save.npy", sim.people.values())
-    np.save("model_save.npy", sim.people.values())
+    np.save(savename, sim.people.values())
+    # np.save("model_save.npy", sim.people.values())
 
     # Optionally plot
     if doplot:
@@ -33,4 +33,6 @@ def test_sim(doplot=False): # If being run via pytest, turn off
 
     return sim
 
-test_sim()
+
+for xx in range(100):
+    test_sim(savename = "run_" + str(xx) +".npy")
