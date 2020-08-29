@@ -21,7 +21,7 @@ def test_sim(doplot=False, savename = "people_save.npy"): # If being run via pyt
 
     # Create and run the simulation
     sim = Sim()
-    sim.set_seed(seed)
+    sim.set_seed(None)
     sim.run(verbose=verbose)
     
     np.save(savename, sim.people.values())
@@ -34,5 +34,5 @@ def test_sim(doplot=False, savename = "people_save.npy"): # If being run via pyt
     return sim
 
 
-for xx in range(100):
-    test_sim(savename = "run_folder/run_" + str(xx) +".npy")
+for xx in range(25):
+    test_sim(savename = "run_folder/run_02_" + str(xx) +".npy")
